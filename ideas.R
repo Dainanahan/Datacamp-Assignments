@@ -3,44 +3,48 @@ lapply(c("tidyverse", "lubridate"), require, character.only = TRUE)
 # read drugs
 drugs <- read_csv("drugs.csv")
 groups <- read_csv("groups.csv")
+
 # types distribution
 drugs %>% 
   select(created, type) %>% 
-  filter(created > "2005-06-13") %>% 
   group_by(type) %>%
   ggplot(aes(x = factor(year(created)), fill = type)) +
   geom_bar() +
-  labs(title = "Bioteck vs. Small Molecule",
+  labs(title = "Biotech vs. Small Molecule",
        x = "Year",
        y = "Number of drugs",
        fill = "Drug Types")
+
 # types increase
-ggplot(data = drugs %>% 
-         select(created, type) %>% 
-         group_by(type, year(created)) %>% 
-         summarize(n = n()) %>% 
-         mutate(count = cumsum(n)),
-       aes(x = `year(created)` , y = count, col = type)) +
-  geom_line() +
-  labs(title = "Bioteck and Small Molecule increase over time",
-       x = "Year",
-       y = "Number of drugs",
-       fill = "Drug Types")
+drugs %>% 
+    select(created, type) %>% 
+    group_by(type, year(created)) %>% 
+    summarize(n = n()) %>% 
+    mutate(count = cumsum(n)) %>% 
+    ggplot(aes(x = `year(created)` , y = count, col = type)) +
+    geom_line() +
+    labs(title = "Biotech and Small Molecule increase over time",
+         x = "Year",
+         y = "Number of drugs",
+         fill = "Drug Types")
+
 # groups distributions
- groups %>% 
-   group_by(text) %>% 
-   summarize(count = n()) %>%
-   ggplot(aes(x = text, y = count, fill = count)) +
-   geom_bar(stat = "identity")
+groups %>% 
+    group_by(text) %>% 
+    summarize(count = n()) %>%
+    ggplot(aes(x = text, y = count, fill = count)) +
+    geom_bar(stat = "identity") + 
+    coord_flip()
    
 # groups distributions by drug type
- drugs %>% 
-   select(primary_key, type) %>% 
-   full_join(groups, by = c("primary_key" = "parent_key")) %>% 
-   group_by(text, type) %>% 
-   summarize(count = n()) %>%
-   ggplot(aes(x = text, y = count, fill = type)) +
-   geom_bar(stat = "identity", position = "dodge2")
+drugs %>% 
+    select(primary_key, type) %>% 
+    full_join(groups, by = c("primary_key" = "parent_key")) %>% 
+    group_by(text, type) %>% 
+    summarize(count = n()) %>%
+    ggplot(aes(x = text, y = count, fill = type)) +
+    geom_bar(stat = "identity", position = "dodge2") + 
+    coord_flip()
  
 # take glimpse
 glimpse(drugs)
