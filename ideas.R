@@ -231,3 +231,13 @@ p2
 # NOTE: use embed_notebook(p2) if displaying in a jupyter notebook
 
 # ================================================
+# How drugs are connected to drugs
+targets <- read_csv("targets.csv")
+targets %>% select(id, parent_key) %>% group_by(parent_key) %>% summarise(count = n()) %>% top_n(10) %>% arrange(desc(count))  %>% as_tibble() %>%ggplot(aes(x=parent_key, y=count, size=count, color=factor(count))) +geom_point(alpha=0.4) + scale_size_continuous( trans="exp", range=c(4, 25)) +
+  xlab("Drugs") +
+  labs( size = "Top 10 drugs targets count" ) + scale_size_continuous(range = c(0.5, 16))
+
+# a look at target actions
+target_actions <- read_csv("target_actions.csv")
+target_actions %>% group_by(text) %>% summarise(count = n()) %>% ggplot(aes(area=count, label=text, fill = factor(count))) +
+  geom_treemap()+  geom_treemap_text(fontface = "italic", colour = "white", place = "centre",grow = TRUE)
