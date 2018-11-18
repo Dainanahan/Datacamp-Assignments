@@ -1,4 +1,4 @@
-lapply(c("tidyverse", "lubridate"), require, character.only = TRUE)
+lapply(c("tidyverse", "lubridate", "treemapify", "plotly"), require, character.only = TRUE)
 
 # ================================================
 
@@ -229,6 +229,32 @@ p2 <-
 p2
 
 # NOTE: use embed_notebook(p2) if displaying in a jupyter notebook
+
+# ================================================
+
+## get drug degree data
+drugDegreeData <- 
+    drugbank %>% 
+    select(drug, type, status, targets) %>% 
+    separate_rows(targets, sep = ';') %>% 
+    group_by(drug, type, status) %>% 
+    summarise(count = n()) %>% 
+    filter(count <= 10)
+
+## get plot of the drug degrees
+p3 <- 
+    drugDegreeData %>% 
+    ggplot(aes(x = count, fill = type)) + 
+    geom_bar() + 
+    xlab('Degree') + 
+    ylab('Quantity') + 
+    labs(title = 'Drug Degree',
+         subtitle = 'Proportions of the different drug degrees in DrugBank', 
+         caption = 'created by ggplot', 
+         fill = 'Drug Type')
+
+## display plot
+p3
 
 # ================================================
 # How drugs are connected to drugs
