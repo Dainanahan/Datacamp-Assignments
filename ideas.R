@@ -136,7 +136,8 @@ drugbank <-
     left_join(groups, by = 'parent_key') %>% 
     left_join(targets, by = 'parent_key') %>% 
     rename(drug = parent_key) %>% 
-    select(drug,creationDate,type, status, targets)
+    # select(drug,creationDate,type, status, targets)
+    select(drug,creationDate,type, status)
 
 write_csv(drugbank, 'drugbank.csv')
 
@@ -257,6 +258,7 @@ p3 <-
 p3
 
 # ================================================
+
 # How drugs are connected to drugs
 targets <- read_csv("targets.csv")
 targets %>% select(id, parent_key) %>% group_by(parent_key) %>% summarise(count = n()) %>% top_n(10) %>% arrange(desc(count))  %>% as_tibble() %>%ggplot(aes(x=parent_key, y=count, size=count, color=factor(count))) +geom_point(alpha=0.4) + scale_size_continuous( trans="exp", range=c(4, 25)) +
@@ -267,3 +269,83 @@ targets %>% select(id, parent_key) %>% group_by(parent_key) %>% summarise(count 
 target_actions <- read_csv("target_actions.csv")
 target_actions %>% group_by(text) %>% summarise(count = n()) %>% ggplot(aes(area=count, label=text, fill = factor(count))) +
   geom_treemap()+  geom_treemap_text(fontface = "italic", colour = "white", place = "centre",grow = TRUE)
+
+# ================================================
+
+drugbank_target_actions <- read_csv("target_actions.csv")
+
+## get counts of the different target actions in the data
+targetActionCounts <- 
+    drugbank_target_actions %>% 
+    group_by(action) %>% 
+    summarise(count = n()) %>% 
+    arrange(desc(count))
+
+## get pie chart of the 5 most occurring target actions in the data
+p3a <- 
+    ggplot(targetActionCounts[1:5,], aes(x = "", y = count, fill = factor(action))) + 
+    geom_bar(width = 1, stat = "identity") +
+    theme(axis.line = element_blank(), plot.title = element_text(hjust=0.5)) + 
+    labs(title="Pie Chart of Target Actions", 
+         fill="Target Action", 
+         x=NULL, 
+         y=NULL, 
+         caption="created by ggplot") + 
+    coord_polar(theta = "y", start=0) + 
+    scale_fill_brewer(palette = "Set2")  # Color palette
+
+## display plot
+p3a
+
+
+##########  ##########
+##      ##  ##      ##
+##      ##  ##########
+##      ##  ##   ##
+##########  ##     ###
+
+
+## get bar chart of the 10 most occurring target actions in the data
+p3b <- 
+    ggplot(targetActionCounts[1:10,], aes(x = reorder(action,count), y = count, fill = letters[1:10])) + 
+    geom_bar(stat = "identity") +
+    theme(axis.line = element_blank(), 
+          plot.title = element_text(hjust=0.5), 
+          plot.subtitle = element_text(hjust=0.5)) + 
+    labs(fill="action", 
+         x = 'Target Action', 
+         y = 'Quantity', 
+         title="Target Actions Distribution", 
+         subtitle = 'Distribution of Target Actions in the Data',
+         caption="created by ggplot") + 
+    guides(fill=FALSE) +    ## removes legend for the bar colors
+    coord_flip()            ## switches the X and Y axes
+
+## display plot
+p3b
+
+# ================================================
+
+## get drug degree data
+drugDegreeData <- 
+    drugbank %>% 
+    select(drug, type, status, targets) %>% 
+    separate_rows(targets, sep = ';') %>% 
+    group_by(drug, type, status) %>% 
+    summarise(count = n()) %>% 
+    filter(count <= 10)
+
+## get plot of the drug degrees
+p3 <- 
+    drugDegreeData %>% 
+    ggplot(aes(x = count, fill = type)) + 
+    geom_bar() + 
+    xlab('Degree') + 
+    ylab('Quantity') + 
+    labs(title = 'Drug Degree',
+         subtitle = 'Proportions of the different drug degrees in DrugBank', 
+         caption = 'created by ggplot', 
+         fill = 'Drug Type')
+
+## display plot
+p3
